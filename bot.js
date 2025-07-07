@@ -8,7 +8,9 @@ const bot = new TelegramBot(token, { polling: true });
 
 // Danh sách ID nhóm được phép hoạt động
 const allowedGroupIds = [-1001234567890, -1009876543210];
-
+bot.on("message", (msg) => {
+  console.log("🆔 Chat ID:", msg.chat.id);
+});
 async function getFunnyReply(prompt) {
   const browser = await puppeteer.launch({
     headless: true,

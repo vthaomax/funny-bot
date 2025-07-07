@@ -38,7 +38,7 @@ async function getFunnyReply(prompt) {
     return res.data.choices[0].message.content;
   } catch (err) {
     console.error("❌ Lỗi gọi OpenRouter:", err.message);
-    return "Đùa, nhắn lằm nhắn lồn, từ từ bot đang suy nghĩ 😅";
+    return "Bot hơi lag... cà khịa sau nha 😅";
   }
 }
 
@@ -52,17 +52,18 @@ app.post(`/bot${token}`, async (req, res) => {
 
   const chatId = msg.chat.id;
   const userText = msg.text || '';
+
   if (msg.from.is_bot || msg.new_chat_members) return res.sendStatus(200);
-  if (!allowedGroupIds.includes(chatId)) return res.sendStatus(200);
+
+  // ✅ Cho phép nhắn riêng hoặc nếu là nhóm thì kiểm tra ID nhóm có trong danh sách allowed
+  if (msg.chat.type !== 'private' && !allowedGroupIds.includes(chatId)) return res.sendStatus(200);
 
   bot.sendChatAction(chatId, "typing");
   const reply = await getFunnyReply(userText);
   bot.sendMessage(chatId, `🤖 ${reply}`);
   res.sendStatus(200);
 });
-bot.on("message", (msg) => {
-  console.log("📌 Chat ID:", msg.chat.id);
-});
+
 // Thiết lập webhook cho Telegram
 bot.setWebHook(`${process.env.BASE_URL}/bot${token}`);
 

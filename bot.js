@@ -53,6 +53,8 @@ app.post(`/bot${token}`, async (req, res) => {
   const chatId = msg.chat.id;
   const userText = msg.text || '';
 
+  console.log("📌 Tin nhắn từ:", msg.chat.type, "| ID:", chatId);
+
   if (msg.from.is_bot || msg.new_chat_members) return res.sendStatus(200);
 
   // ✅ Cho phép nhắn riêng hoặc nếu là nhóm thì kiểm tra ID nhóm có trong danh sách allowed

@@ -13,9 +13,10 @@ bot.on("message", (msg) => {
 });
 async function getFunnyReply(prompt) {
   const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox']
-  });
+  headless: true,
+  args: ['--no-sandbox'],
+  executablePath: '/usr/bin/google-chrome'  // Render dùng Chrome có sẵn
+});
 
   try {
     const page = await browser.newPage();

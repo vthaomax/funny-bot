@@ -1,4 +1,4 @@
-// bot.js - Sử dụng webhook + Groq API miễn phí + mở rộng chức năng kiểm duyệt link và spam
+// bot.js - Sử dụng webhook + Groq API miễn phí + kiểm duyệt mạnh (link, từ cấm, spam)
 
 import TelegramBot from "node-telegram-bot-api";
 import axios from "axios";
@@ -27,10 +27,10 @@ const bannedWords = ["@everyone", "lô đề", "xóc đĩa", "tặng tiền"];
 // Từ spam thường gặp
 const spamPatterns = [
   /liên hệ (zalo|fb|telegram)/i,
+  /inbox/i,
   /kèo thơm/i,
   /trả phí/i,
-  /địt/i,
-  /sex/i
+  /(hack|crack|tool)/i
 ];
 
 // Hàm gọi Groq API để trả lời hài hước
@@ -55,7 +55,7 @@ async function getFunnyReply(prompt) {
     return res.data.choices[0].message.content;
   } catch (err) {
     console.error("❌ Lỗi gọi Groq API:", err.message);
-    return "Đùa, nhắn lằm nhắn lốn, từ từ bot đang suy nghĩ 😅";
+    return "Bot hơi khịa quá tay, giờ bị đơ... đợi tí nha 😅";
   }
 }
 
@@ -63,17 +63,15 @@ async function getFunnyReply(prompt) {
 function containsInvalidLink(text) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const urls = text.match(urlRegex) || [];
-
-  return urls.some((url) => {
+  return urls.some(url => {
     try {
       const hostname = new URL(url).hostname.replace(/^www\./, "").toLowerCase();
-      return !allowedDomains.some((domain) => hostname === domain || hostname.endsWith("." + domain));
+      return !allowedDomains.some(domain => hostname === domain || hostname.endsWith("." + domain));
     } catch {
-      return true; // Nếu URL sai format thì cũng coi là không hợp lệ
+      return true;
     }
   });
 }
-
 
 // Hàm kiểm tra nội dung spam
 function isSpam(text) {
@@ -95,45 +93,35 @@ app.post(`/bot${token}`, async (req, res) => {
   if (newMembers) {
     for (const member of newMembers) {
       if (!member.is_bot) {
-        bot.sendMessage(chatId, `👋 Chào mừng @${member.username || member.first_name} đã đến với nhóm! Nhớ đọc nội quy và giao lưu với mọi người nhé! 😎`);
+        bot.sendMessage(chatId, `👋 Chào mừng @${member.username || member.first_name} đã đến với nhóm! Nhớ đọc nội quy và chuẩn bị tinh thần bị cà khịa nhé 😎`);
       }
     }
     return res.sendStatus(200);
   }
 
   const userText = msg.text || '';
-
-  console.log("📌 Tin nhắn từ:", msg.chat.type, "| ID:", chatId);
-
   if (msg.from.is_bot) return res.sendStatus(200);
-
-  // ✅ Cho phép nhắn riêng hoặc nếu là nhóm thì kiểm tra ID nhóm
   if (msg.chat.type !== 'private' && !allowedGroupIds.includes(chatId)) return res.sendStatus(200);
 
-  // Cảnh báo nếu có từ cấm
   const containsBannedWord = bannedWords.some(word => userText.toLowerCase().includes(word));
-  if (containsBannedWord) {
-    bot.sendMessage(chatId, `🚨 Tin nhắn có nội dung không phù hợp. Vui lòng không spam hoặc gửi nội dung nhạy cảm!`);
+  const hasInvalidLink = containsInvalidLink(userText);
+  const isSpamMsg = isSpam(userText);
+
+  if (containsBannedWord || hasInvalidLink || isSpamMsg) {
+    try {
+      await bot.deleteMessage(chatId, msg.message_id);
+    } catch (err) {
+      console.warn("❌ Không thể xóa tin nhắn vi phạm:", err.message);
+    }
+    try {
+      await bot.sendMessage(chatId, `🚨 Tin nhắn vi phạm nội quy (spam, từ cấm hoặc link không hợp lệ) đã bị xóa!`, { reply_to_message_id: msg.message_id });
+    } catch (err) {
+      console.warn("❌ Không thể gửi cảnh báo:", err.message);
+    }
     return res.sendStatus(200);
   }
 
-    // Nếu chứa link không hợp lệ thì xóa tin nhắn
-  if (containsInvalidLink(userText)) {
-    bot.deleteMessage(chatId, msg.message_id).catch(err => {
-      console.warn("❌ Không thể xóa link không hợp lệ:", err.message);
-    });
-    return res.sendStatus(200);
-  }
-  
-  // Nếu chứa nội dung spam thì xóa
-  if (isSpam(userText)) {
-    bot.deleteMessage(chatId, msg.message_id).catch(err => {
-      console.warn("❌ Không thể xóa spam:", err.message);
-    });
-    return res.sendStatus(200);
-  }
-
-
+  // Trả lời hài hước
   bot.sendChatAction(chatId, "typing");
   const reply = await getFunnyReply(userText);
   bot.sendMessage(chatId, `🤖 ${reply}`);

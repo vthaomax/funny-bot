@@ -20,7 +20,7 @@ async function getFunnyReply(prompt) {
     const res = await axios.post(
       'https://api.groq.com/openai/v1/chat/completions',
       {
-        model: 'llama3-8b-8192', // Model miễn phí, nhanh
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct', // Model miễn phí, nhanh
         messages: [
           { role: 'system', content: 'Bạn là một trợ lý hài hước kiểu GenZ Việt Nam, thích cà khịa một cách thông minh.' },
           { role: 'user', content: prompt }

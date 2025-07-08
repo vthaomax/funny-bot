@@ -12,7 +12,7 @@ const app = express();
 app.use(express.json());
 
 // Danh sách nhóm được phép hoạt động
-const allowedGroupIds = [-1001234567890, -1009876543210];
+const allowedGroupIds = [-1002556187305];
 
 // Hàm gọi Groq API để trả lời hài hước
 async function getFunnyReply(prompt) {

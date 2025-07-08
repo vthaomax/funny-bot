@@ -27,10 +27,10 @@ const bannedWords = ["@everyone", "lô đề", "xóc đĩa", "tặng tiền"];
 // Từ spam thường gặp
 const spamPatterns = [
   /liên hệ (zalo|fb|telegram)/i,
-  /inbox/i,
   /kèo thơm/i,
   /trả phí/i,
-  /(hack|crack|tool)/i
+  /địt/i,
+  /sex/i
 ];
 
 // Hàm gọi Groq API để trả lời hài hước
@@ -63,15 +63,17 @@ async function getFunnyReply(prompt) {
 function containsInvalidLink(text) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const urls = text.match(urlRegex) || [];
-  return urls.some(url => {
+
+  return urls.some((url) => {
     try {
-      const hostname = new URL(url).hostname.replace("www.", "");
-      return !allowedDomains.some(domain => hostname.endsWith(domain));
+      const hostname = new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+      return !allowedDomains.some((domain) => hostname === domain || hostname.endsWith("." + domain));
     } catch {
-      return true;
+      return true; // Nếu URL sai format thì cũng coi là không hợp lệ
     }
   });
 }
+
 
 // Hàm kiểm tra nội dung spam
 function isSpam(text) {

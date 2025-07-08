@@ -20,7 +20,7 @@ async function getFunnyReply(prompt) {
     const res = await axios.post(
       'https://api.groq.com/openai/v1/chat/completions',
       {
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct', // Model miễn phí, nhanh
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         messages: [
           { role: 'system', content: 'Bạn là một trợ lý hài hước kiểu GenZ Việt Nam, thích cà khịa một cách thông minh.' },
           { role: 'user', content: prompt }
@@ -54,7 +54,6 @@ app.post(`/bot${token}`, async (req, res) => {
   const userText = msg.text || '';
 
   console.log("📌 Tin nhắn từ:", msg.chat.type, "| ID:", chatId);
-
 
   if (msg.from.is_bot || msg.new_chat_members) return res.sendStatus(200);
 

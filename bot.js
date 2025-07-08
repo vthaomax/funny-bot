@@ -115,21 +115,22 @@ app.post(`/bot${token}`, async (req, res) => {
     return res.sendStatus(200);
   }
 
-  // Nếu chứa link không hợp lệ thì xóa tin nhắn
+    // Nếu chứa link không hợp lệ thì xóa tin nhắn
   if (containsInvalidLink(userText)) {
-    bot.deleteMessage(chatId, msg.message_id).catch(() => {
-      bot.sendMessage(chatId, `🚫 Không được phép gửi link ngoài danh sách cho phép.`);
+    bot.deleteMessage(chatId, msg.message_id).catch(err => {
+      console.warn("❌ Không thể xóa link không hợp lệ:", err.message);
+    });
+    return res.sendStatus(200);
+  }
+  
+  // Nếu chứa nội dung spam thì xóa
+  if (isSpam(userText)) {
+    bot.deleteMessage(chatId, msg.message_id).catch(err => {
+      console.warn("❌ Không thể xóa spam:", err.message);
     });
     return res.sendStatus(200);
   }
 
-  // Nếu chứa nội dung spam thì xóa
-  if (isSpam(userText)) {
-    bot.deleteMessage(chatId, msg.message_id).catch(() => {
-      bot.sendMessage(chatId, `🧹 Spam bị dọn dẹp. Gửi tử tế vào nhé!`);
-    });
-    return res.sendStatus(200);
-  }
 
   bot.sendChatAction(chatId, "typing");
   const reply = await getFunnyReply(userText);

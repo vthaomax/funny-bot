@@ -45,6 +45,8 @@ const bot = new TelegramBot(token);
 
 // Webhook route từ Telegram
 app.post(`/bot${token}`, async (req, res) => {
+  console.log("📥 Đã nhận request từ Telegram:", JSON.stringify(req.body));
+
   const msg = req.body.message;
   if (!msg) return res.sendStatus(200);
 
@@ -52,6 +54,7 @@ app.post(`/bot${token}`, async (req, res) => {
   const userText = msg.text || '';
 
   console.log("📌 Tin nhắn từ:", msg.chat.type, "| ID:", chatId);
+
 
   if (msg.from.is_bot || msg.new_chat_members) return res.sendStatus(200);
 

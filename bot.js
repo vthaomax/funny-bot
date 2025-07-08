@@ -1,4 +1,4 @@
-// bot.js - Sử dụng webhook thay cho polling
+// bot.js - Sử dụng webhook + Groq API miễn phí
 
 import TelegramBot from "node-telegram-bot-api";
 import axios from "axios";
@@ -14,38 +14,36 @@ app.use(express.json());
 // Danh sách nhóm được phép hoạt động
 const allowedGroupIds = [-1001234567890, -1009876543210];
 
-// Hàm gọi GPT API để trả lời hài hước
+// Hàm gọi Groq API để trả lời hài hước
 async function getFunnyReply(prompt) {
   try {
     const res = await axios.post(
-      'https://openrouter.ai/api/v1/chat/completions',
+      'https://api.groq.com/openai/v1/chat/completions',
       {
-        model: 'mistralai/mistral-7b-instruct',
+        model: 'llama3-8b-8192', // Model miễn phí, nhanh
         messages: [
-          { role: 'system', content: 'Bạn là một trợ lý hài hước, thông minh, hay cà khịa theo kiểu GenZ Việt Nam.' },
+          { role: 'system', content: 'Bạn là một trợ lý hài hước kiểu GenZ Việt Nam, thích cà khịa một cách thông minh.' },
           { role: 'user', content: prompt }
         ]
       },
       {
         headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://t.me/ig2fa',
-          'X-Title': 'Telegram funny bot'
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+          'Content-Type': 'application/json'
         }
       }
     );
     return res.data.choices[0].message.content;
   } catch (err) {
-    console.error("❌ Lỗi gọi OpenRouter:", err.message);
-    return "Bot hơi lag... cà khịa sau nha 😅";
+    console.error("❌ Lỗi gọi Groq API:", err.message);
+    return "Bot hơi khịa quá tay, giờ bị đơ... đợi tí nha 😅";
   }
 }
 
-// Khởi tạo bot với chế độ webhook (không polling)
+// Khởi tạo bot Telegram không polling (vì dùng webhook)
 const bot = new TelegramBot(token);
 
-// Route tiếp nhận webhook từ Telegram
+// Webhook route từ Telegram
 app.post(`/bot${token}`, async (req, res) => {
   const msg = req.body.message;
   if (!msg) return res.sendStatus(200);
@@ -57,7 +55,7 @@ app.post(`/bot${token}`, async (req, res) => {
 
   if (msg.from.is_bot || msg.new_chat_members) return res.sendStatus(200);
 
-  // ✅ Cho phép nhắn riêng hoặc nếu là nhóm thì kiểm tra ID nhóm có trong danh sách allowed
+  // ✅ Cho phép nhắn riêng hoặc nếu là nhóm thì kiểm tra ID nhóm
   if (msg.chat.type !== 'private' && !allowedGroupIds.includes(chatId)) return res.sendStatus(200);
 
   bot.sendChatAction(chatId, "typing");
@@ -69,7 +67,7 @@ app.post(`/bot${token}`, async (req, res) => {
 // Thiết lập webhook cho Telegram
 bot.setWebHook(`${process.env.BASE_URL}/bot${token}`);
 
-// Khởi chạy server
+// Khởi chạy express server
 app.listen(port, () => {
   console.log(`🚀 Bot đang chạy webhook tại cổng ${port}`);
 });
